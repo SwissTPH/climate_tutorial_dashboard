@@ -1,11 +1,11 @@
 name: ClimateTutorialDashboard
-title: ClimateTutorialDashboard
+title: dashboardApp
 username: aimswisstph
 account: aimswisstph
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 13413646
-bundleId: 9400191
+bundleId: 9435762
 url: https://aimswisstph.shinyapps.io/ClimateTutorialDashboard/
 version: 1
 asMultiple: FALSE

@@ -56,8 +56,8 @@ saveRDS(all_climate_data, file = "~/gitRepos/climate_tutorial_dashboard/processi
 
 
 # Only upload the necessary data on the dashboard
-filtered_climate_data = all_climate_data %>% filter(yr >= 2023 & yr <= 39)
-saveRDS(filtered_climate_data, file = "~/gitRepos/climate_tutorial_dashboard/data/climate_data_province_v2.RDS")
+filtered_climate_data = all_climate_data %>% filter(yr >= 2022 & yr <= 2039)
+saveRDS(filtered_climate_data, file = "~/gitRepos/climate_tutorial_dashboard/dashboardApp/data/climate_data_province_v2.RDS")
 
 #   
 # # The first step to simulating from the model is to specify the region 
