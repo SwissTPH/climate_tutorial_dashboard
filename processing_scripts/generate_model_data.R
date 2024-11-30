@@ -12,52 +12,80 @@ source("~/gitRepos/climate_tutorial_dashboard/processing_scripts/adjust_by_seaso
 
 ## Model parameters
 model_params = read.csv("~/gitRepos/code_climate/province_sites_parameters.csv", sep=";")
-saveRDS(model_params, file = "~/gitRepos/malclimsim/ClimateTutorialDashboard/data/province_sites_parameters.RDS")
+# saveRDS(model_params, file = "~/gitRepos/malclimsim/ClimateTutorialDashboard/data/province_sites_parameters.RDS")
 
 ## Climate data preparation
-climate_data1 = readRDS("~/gitRepos/code_climate/province_level_past_future_climate_data.RDS")
-climate_data2 = readRDS("~/gitRepos/code_climate/version2_province_level_past_future_climate_data.RDS")
-climate_data_no_seasonality = climate_data1 %>% select(province, date, none_seasonal_ppt)
-climate_data_no_seasonality = climate_data_no_seasonality %>% rename(no_seasonality = none_seasonal_ppt)
+#climate_data1 = readRDS("~/gitRepos/code_climate/province_level_past_future_climate_data.RDS")
+climate_data = readRDS("~/gitRepos/code_climate/version4d_province_level_past_future_climate_data.RDS")
+#climate_data_no_seasonality = climate_data1 %>% select(province, date, none_seasonal_ppt)
+#climate_data_no_seasonality = climate_data_no_seasonality %>% rename(no_seasonality = none_seasonal_ppt)
 
 # Fix the no seasonal entries in the new dataset to be constant
 # Update values in df1 with those from df2 where dates match
-climate_data = climate_data2 %>%
-  left_join(climate_data_no_seasonality, by = c("province", "date")) %>% 
-  mutate(none_seasonal_ppt = no_seasonality) %>% 
-  select(-no_seasonality)  # Remove the temporary new_value column
+# climate_data = climate_data2 %>%
+#   left_join(climate_data_no_seasonality, by = c("province", "date")) %>% 
+#   mutate(none_seasonal_ppt = no_seasonality) %>% 
+#   select(-no_seasonality)  # Remove the temporary new_value column
 
 # Remove the seasonal_ppt column which is not needed
-climate_data = climate_data %>% select(-seasonal_ppt)
+# climate_data = climate_data %>% select(-seasonal_ppt)
 
 # Rename columns to fit with scenario encoding
 all_climate_data = climate_data %>% rename(normal_ppt = norm_ppt,
                                            drier_ppt = dry_ppt,
                                            extreme_dry_ppt = drier_ppt,
-                                           wetter_ppt = wet_ppt,
+                                           more_wet_ppt = wet_ppt,
                                            extreme_wet_ppt = wetter_ppt,
                                            normal_temp = norm_temp,
                                            warmer_temp = warm_temp,
                                            colder_temp = cool_temp,
                                            extreme_warm_temp = warmer_temp,
-                                           extreme_cold_temp = cooler_temp)
+                                           extreme_cold_temp = cooler_temp,
+                                           normal_seasonal_amplified_ppt = norm_ppt_amplified,   
+                                           normal_seasonal_longer_ppt = norm_ppt_longer,      
+                                           normal_seasonal_shorter_ppt = norm_ppt_shorter,     
+                                           extreme_dry_seasonal_amplified_ppt = drier_ppt_amplified, 
+                                           extreme_dry_seasonal_longer_ppt = drier_ppt_longer,     
+                                           extreme_dry_seasonal_shorter_ppt = drier_ppt_shorter,    
+                                           drier_seasonal_amplified_ppt = dry_ppt_amplified,    
+                                           drier_seasonal_longer_ppt = dry_ppt_longer,       
+                                           drier_seasonal_shorter_ppt = dry_ppt_shorter,     
+                                           more_wet_seasonal_amplified_ppt = wet_ppt_amplified,    
+                                           more_wet_seasonal_longer_ppt = wet_ppt_longer,       
+                                           more_wet_seasonal_shorter_ppt = wet_ppt_shorter,      
+                                           extreme_wet_seasonal_amplified_ppt = wetter_ppt_amplified, 
+                                           extreme_wet_seasonal_longer_ppt = wetter_ppt_longer, 
+                                           extreme_wet_seasonal_shorter_ppt = wetter_ppt_shorter)
 
 # Generate the rainfall under different seasonality scenarios
-for (seas_scenario in c("amplified", "longer", "shorter")) {
-  for (rain_scenario in c("normal", "drier", "extreme_dry", "wetter", "extreme_wet")) {
-    column_name = paste0(rain_scenario, "_seasonal_", seas_scenario, "_ppt")
-    print(column_name)
-    rain_scenario_col = paste0(rain_scenario, "_ppt")
-    print(rain_scenario_col)
-    all_climate_data[, column_name] = seasonality_fun(all_climate_data[, rain_scenario_col], seas_scenario)
-  }
-}
-saveRDS(all_climate_data, file = "~/gitRepos/climate_tutorial_dashboard/processing_scripts/all_climate_data_province_v2.RDS")
+# for (location in unique(model_params$Province)) {
+#   for (seas_scenario in c("amplified", "longer", "shorter")) {
+#     for (rain_scenario in c("normal", "drier", "extreme_dry", "more_wet", "extreme_wet")) {
+#       column_name = paste0(rain_scenario, "_seasonal_", seas_scenario, "_ppt")
+#       print(column_name)
+#       
+#       rain_scenario_col = paste0(rain_scenario, "_ppt")
+#       print(rain_scenario_col)
+#       
+#       idx_location = which(all_climate_data$province == location)
+#       # First initialize the new column with no seasonality change
+#       all_climate_data[idx_location, column_name] = all_climate_data[idx_location, rain_scenario_col]
+#       # Change the seasonality for the future
+#       idx_future = which(all_climate_data$province == location & all_climate_data$yr >= 2024)
+#       # if (rain_scenario == drier) {
+#       #   print("here")
+#       # }
+#       all_climate_data[idx_future, column_name] = seasonality_fun(all_climate_data[idx_future, rain_scenario_col], seas_scenario)
+#     }
+#   }
+# }
+saveRDS(all_climate_data, file = "~/gitRepos/climate_tutorial_dashboard/processing_scripts/all_climate_data_province_v5.RDS")
 
+na_counts <- colSums(is.na(all_climate_data))
 
 # Only upload the necessary data on the dashboard
 filtered_climate_data = all_climate_data %>% filter(yr >= 2022 & yr <= 2039)
-saveRDS(filtered_climate_data, file = "~/gitRepos/climate_tutorial_dashboard/dashboardApp/data/climate_data_province_v2.RDS")
+saveRDS(filtered_climate_data, file = "~/gitRepos/climate_tutorial_dashboard/dashboardApp_FR/data/climate_data_province_v5.RDS")
 
 #   
 # # The first step to simulating from the model is to specify the region 
