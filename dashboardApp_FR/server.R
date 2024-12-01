@@ -19,7 +19,7 @@ function(input, output, session) {
   # Load model and  data
   climate_data = readRDS("data/climate_data_province_v5.RDS")
   province_params = readRDS("data/province_sites_parameters.RDS")
-  model_pred = readRDS("data/model_predictions_province_v5.RDS")
+  model_pred = readRDS("data/model_predictions_province_v6.RDS")
   start_year = 2023
   
   source("rainfall_anomaly_calculation.R")
@@ -58,7 +58,7 @@ function(input, output, session) {
   # Activate/deactivate parts of the inputs based on temperature type
   observe({
     # If "A" is selected in the first selectInput, disable the second selectInput
-    if (input$temperature_type == "uniform shift") {
+    if (input$temperature_type == "baseline constant") {
       selected_temp(paste0("temp_", input$discrete_temperature, "C"))
       SMC_coverage(0)
       
@@ -350,26 +350,34 @@ function(input, output, session) {
                                                      rain_scen == selected_rain &
                                                      SMC_cov == SMC_coverage())
     
-    model_pred_scen_1$scenario = "Selected climate scenario"
+    model_pred_scen_1$scenario = "Selected climate and SMC scenario"
+    
     model_pred_scen_2 = model_pred_scen %>% filter(temp_scen == "normal_temp" &
                                                      rain_scen == "normal_ppt" &
                                                      SMC_cov == 0)
-    model_pred_scen_2$scenario = "Counterfactual"
+    model_pred_scen_2$scenario = "Counterfactual\n(Normal climate, no SMC)"
+    
     model_pred_scen_3 = model_pred_scen %>% filter(temp_scen == "normal_temp" &
                                                      rain_scen == "normal_ppt" &
                                                      SMC_cov == SMC_coverage())
-    model_pred_scen_3$scenario = "Normal climate with SMC"
+    model_pred_scen_3$scenario = "Normal climate, selected SMC scenario"
     
-    if (SMC_coverage() > 0) {
-      model_pred_scen = rbind.data.frame(model_pred_scen_1, model_pred_scen_2, model_pred_scen_3)
-      model_pred_scen = as.data.frame(model_pred_scen)
-      model_pred_scen$scenario = factor(model_pred_scen$scenario,
-                                        levels = c("Counterfactual", "Selected climate scenario", "Normal climate with SMC"))
-      model_colors <- c("Selected climate scenario" = "#c51b8a", "Counterfactual" = "grey", "Normal climate with SMC" = "#009E73")
-    } else {
-      model_pred_scen = rbind.data.frame(model_pred_scen_1, model_pred_scen_2)
-      model_colors <- c("Selected climate scenario" = "#c51b8a", "Counterfactual" = "grey")
-    }
+    model_pred_scen_4 = model_pred_scen %>% filter(temp_scen == selected_temp() &
+                                                     rain_scen == selected_rain &
+                                                     SMC_cov == 0)
+    model_pred_scen_4$scenario = "Selected climate scenario, no SMC"
+    
+    model_pred_scen = rbind.data.frame(model_pred_scen_1, model_pred_scen_2, model_pred_scen_3, model_pred_scen_4)
+    model_pred_scen = as.data.frame(model_pred_scen)
+    model_pred_scen$scenario = factor(model_pred_scen$scenario,
+                                      levels = c("Selected climate scenario, no SMC",
+                                                 "Normal climate, selected SMC scenario",
+                                                 "Counterfactual\n(Normal climate, no SMC)", 
+                                                 "Selected climate and SMC scenario"))
+    model_colors <- c("Selected climate scenario, no SMC" = "#56B4E9",
+                      "Normal climate, selected SMC scenario" = "#009E73",
+                      "Counterfactual\n(Normal climate, no SMC)" = "grey",
+                      "Selected climate and SMC scenario" = "#c51b8a")
     
     if (input$output_type == "inc") {
       if(input$age_groups == "moins de 5 ans") {
@@ -385,9 +393,15 @@ function(input, output, session) {
       plot_title = "Entomological inoculation rate"
     }
     
+    # Define hidden scenarios
+    hidden_scenarios = c("Selected climate scenario, no SMC",
+                         "Normal climate, selected SMC scenario")
+    # Filter out the data for the hidden scenarios
+    visible_data = model_pred_scen[!(model_pred_scen$scenario %in% hidden_scenarios), ]
+    
     # Create the plotly plot
-    plot <- plot_ly(
-      data = model_pred_scen, 
+    plot = plot_ly(
+      data = as.data.frame(visible_data), 
       x = ~date_ymd, 
       y = ~get(model_out), 
       color = ~scenario,
@@ -395,17 +409,35 @@ function(input, output, session) {
       mode = 'lines+markers',
       line = list(width = 2),
       colors = model_colors
-    ) %>%
+    ) 
+    
+    # Add the hidden scenarios but with `legendonly` visibility
+    for (hidden_scenario in hidden_scenarios) {
+      plot = plot %>%
+        add_trace(
+          data = as.data.frame(model_pred_scen[model_pred_scen$scenario == hidden_scenario, ]),
+          x = ~date_ymd,
+          y = ~get(model_out),
+          type = 'scatter',
+          mode = 'lines+markers',
+          color = ~scenario,
+          colors = model_colors,
+          visible = 'legendonly'  # Hide these from the plot but show in legend
+        )
+    }
+    
+    # Adjust layout as necessary
+    plot = plot %>%
       layout(
         title = "",
-        xaxis = list(title = "Year"),
+        xaxis = list(title = "Time (months)"),
         yaxis = list(title = plot_title),
         legend = list(
           title = list(text = ""),
-          orientation = 'h',  # Horizontal legend
-          x = 0.5,  # Center the legend horizontally
-          xanchor = 'center',  # Anchor the x position at the center
-          y = -0.2  # Position the legend below the plot
+          orientation = 'h',
+          x = 0.5,
+          xanchor = 'center',
+          y = -0.2
         )
       )
     
@@ -487,30 +519,39 @@ function(input, output, session) {
     model_pred_scen = model_pred %>% filter(year(date_ymd) >= start_year & 
                                               year(date_ymd) <= input$year_forecast &
                                               province == input$province_choice)
+    
     model_pred_scen_1 = model_pred_scen %>% filter(temp_scen == selected_temp() &
                                                      rain_scen == selected_rain &
                                                      SMC_cov == SMC_coverage())
     
-    model_pred_scen_1$scenario = "Selected climate scenario"
+    model_pred_scen_1$scenario = "Selected climate and SMC scenario"
+    
     model_pred_scen_2 = model_pred_scen %>% filter(temp_scen == "normal_temp" &
                                                      rain_scen == "normal_ppt" &
                                                      SMC_cov == 0)
-    model_pred_scen_2$scenario = "Counterfactual"
+    model_pred_scen_2$scenario = "Counterfactual\n(Normal climate, no SMC)"
+    
     model_pred_scen_3 = model_pred_scen %>% filter(temp_scen == "normal_temp" &
                                                      rain_scen == "normal_ppt" &
                                                      SMC_cov == SMC_coverage())
-    model_pred_scen_3$scenario = "Normal climate with SMC"
+    model_pred_scen_3$scenario = "Normal climate, selected SMC scenario"
     
-    if (SMC_coverage() > 0) {
-      model_pred_scen = rbind.data.frame(model_pred_scen_1, model_pred_scen_2, model_pred_scen_3)
-      model_pred_scen = as.data.frame(model_pred_scen)
-      model_pred_scen$scenario = factor(model_pred_scen$scenario,
-                                        levels = c("Counterfactual", "Selected climate scenario", "Normal climate with SMC"))
-      model_colors <- c("Selected climate scenario" = "#c51b8a", "Counterfactual" = "grey", "Normal climate with SMC" = "#009E73")
-    } else {
-      model_pred_scen = rbind.data.frame(model_pred_scen_1, model_pred_scen_2)
-      model_colors <- c("Selected climate scenario" = "#c51b8a", "Counterfactual" = "grey")
-    }
+    model_pred_scen_4 = model_pred_scen %>% filter(temp_scen == selected_temp() &
+                                                     rain_scen == selected_rain &
+                                                     SMC_cov == 0)
+    model_pred_scen_4$scenario = "Selected climate scenario, no SMC"
+    
+    model_pred_scen = rbind.data.frame(model_pred_scen_1, model_pred_scen_2, model_pred_scen_3, model_pred_scen_4)
+    model_pred_scen = as.data.frame(model_pred_scen)
+    model_pred_scen$scenario = factor(model_pred_scen$scenario,
+                                      levels = c("Selected climate scenario, no SMC",
+                                                 "Normal climate, selected SMC scenario",
+                                                 "Counterfactual\n(Normal climate, no SMC)", 
+                                                 "Selected climate and SMC scenario"))
+    model_colors <- c("Selected climate scenario, no SMC" = "#56B4E9",
+                      "Normal climate, selected SMC scenario" = "#009E73",
+                      "Counterfactual\n(Normal climate, no SMC)" = "grey",
+                      "Selected climate and SMC scenario" = "#c51b8a")
     
     model_pred_scen$year = year(model_pred_scen$date_ymd)
     model_pred_scen = model_pred_scen %>% group_by(year, scenario) %>% 
@@ -532,9 +573,15 @@ function(input, output, session) {
       plot_title = "Entomological inoculation rate"
     }
     
+    # Define hidden scenarios
+    hidden_scenarios = c("Selected climate scenario, no SMC",
+                         "Normal climate, selected SMC scenario")
+    # Filter out the data for the hidden scenarios
+    visible_data = model_pred_scen[!(model_pred_scen$scenario %in% hidden_scenarios), ]
+
     # Create the plotly plot
-    plot <- plot_ly(
-      data = as.data.frame(model_pred_scen), 
+    plot = plot_ly(
+      data = as.data.frame(visible_data), 
       x = ~year, 
       y = ~get(model_out), 
       color = ~scenario,
@@ -542,17 +589,35 @@ function(input, output, session) {
       mode = 'lines+markers',
       line = list(width = 2),
       colors = model_colors
-    ) %>%
+    ) 
+    
+    # Add the hidden scenarios but with `legendonly` visibility
+    for (hidden_scenario in hidden_scenarios) {
+      plot = plot %>%
+        add_trace(
+          data = as.data.frame(model_pred_scen[model_pred_scen$scenario == hidden_scenario, ]),
+          x = ~year,
+          y = ~get(model_out),
+          type = 'scatter',
+          mode = 'lines+markers',
+          color = ~scenario,
+          colors = model_colors,
+          visible = 'legendonly'  # Hide these from the plot but show in legend
+        )
+    }
+    
+    # Adjust layout as necessary
+    plot = plot %>%
       layout(
         title = "",
         xaxis = list(title = "Year"),
         yaxis = list(title = plot_title),
         legend = list(
           title = list(text = ""),
-          orientation = 'h',  # Horizontal legend
-          x = 0.5,  # Center the legend horizontally
-          xanchor = 'center',  # Anchor the x position at the center
-          y = -0.2  # Position the legend below the plot
+          orientation = 'h',
+          x = 0.5,
+          xanchor = 'center',
+          y = -0.2
         )
       )
     

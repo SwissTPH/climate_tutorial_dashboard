@@ -64,12 +64,12 @@ page_navbar(
           # Climate scenarios to select
           selectInput(
             inputId = "temperature_type",              # Unique ID for the dropdown
-            label = HTML("S&eacute;lectionnez le type de temp&eacute;rature:"),      # Label displayed to users
-            choices = c("uniform shift", "temporal evolution"),
+            label = HTML("S&eacute;lectionnez le type d'hypoth&egrave;se:"),      # Label displayed to users
+            choices = c("baseline constant", "temporal evolution"),
             selected = "temporal evolution"                 # Default selected value
           ),
           conditionalPanel(
-            condition = "input.temperature_type != 'uniform shift'", # Show only if continuous temperatures are selected
+            condition = "input.temperature_type != 'baseline constant'", # Show only if continuous temperatures are selected
             selectInput(
               inputId = "temperature_scenario",              # Unique ID for the dropdown
               label = HTML("S&eacute;lectionnez un sc&eacute;nario de temp&eacute;rature:"),      # Label displayed to users
@@ -78,7 +78,7 @@ page_navbar(
             )
           ),
           conditionalPanel(
-            condition = "input.temperature_type == 'uniform shift'", # Show only if discrete temperatures are selected
+            condition = "input.temperature_type == 'baseline constant'", # Show only if discrete temperatures are selected
             sliderInput("discrete_temperature", HTML("S&eacute;lectionnez une temp&eacute;rature:"), 
                         min = 20, max = 28, 
                         value = c(20), step = 2,
@@ -108,7 +108,7 @@ page_navbar(
             sliderTextInput(
               inputId = "SMC_cov",
               label = HTML("S&eacute;lectionnez une valeur pour la couverture CPS:"),
-              choices = c(0, 60, 80, 100),   # Custom values
+              choices = c(0, 20, 40, 60, 80, 100),   # Custom values
               selected = 0,                 # Default selected value
               grid = TRUE                    # Display tick marks
             ),
@@ -207,13 +207,13 @@ page_navbar(
           full_screen = TRUE,
           div(class = "card-body",
               full_screen = TRUE,
-              h4("Predicted malaria transmission dynamics"),
+              h4(HTML("Pr&eacute;dictions de la dynamique de transmission du paludisme")),
               # Tabset panel with two tabs
               tabsetPanel(
-                tabPanel("Monthly", 
+                tabPanel("Mensuel", 
                          withSpinner(plotlyOutput("model_plot_monthly"), type = 8, color = "grey")  # Add spinner
                 ),
-                tabPanel("Yearly",
+                tabPanel("Annuel",
                          withSpinner(plotlyOutput("model_plot_yearly"), type = 8, color = "grey") 
                 )
               )
@@ -320,7 +320,7 @@ page_navbar(
                               suivre l'augmentation projet&eacute;e des temp&eacute;ratures 
                               moyennes selon le RCP 4.5.")),
                                
-                               p(strong(em("Uniform shift in temperature"))),
+                               p(strong(em("Baseline constant temperature"))),
                                p(HTML("Calcul&eacute;e comme la moyenne quotidienne des valeurs 
                               de temp&eacute;rature observ&eacute;es entre 1995 et 2016. 
                               Contrairement au profil de temp&eacute;rature normal, une 
@@ -336,21 +336,21 @@ page_navbar(
                               1995 et 2023. Les valeurs &agrave; partir de 2024 sont 
                               suppos&eacute;es maintenir cette norme climatique comme r&eacute;f&eacute;rence.")),
                                
-                               p(strong(em("Drier rainfall (temporal evolution)"))),
+                               p(strong(em("Drier rainfall"))),
                                p(HTML("Calcul&eacute;e comme le 20e centile des valeurs quotidiennes 
                               de pr&eacute;cipitations observ&eacute;es entre 1995 et 2023. 
                               &Agrave; partir de 2024, les valeurs de pr&eacute;cipitations 
                               suivent le changement projet&eacute; du niveau de 
                               pr&eacute;cipitations et de la saisonnalit&eacute; selon le RCP 4.5.")),
                                
-                               p(strong(em("Extreme dry rainfall (temporal evolution)"))),
+                               p(strong(em("Extreme dry rainfall"))),
                                p(HTML("Calcul&eacute;e comme le 45e centile des valeurs quotidiennes 
                               de pr&eacute;cipitations observ&eacute;es entre 1995 et 2023. 
                               &agrave; partir de 2024, les valeurs de pr&eacute;cipitations suivent 
                               le changement projet&eacute; du niveau de pr&eacute;cipitations et de 
                               la saisonnalit&eacute; selon le RCP 4.5.")),
                                
-                               p(strong(em("Wet rainfall (temporal evolution)"))),
+                               p(strong(em("More wet rainfall"))),
                                p(HTML("Calcul&eacute;e comme la moyenne quotidienne des valeurs 
                               quotidiennes de pr&eacute;cipitations observ&eacute;es entre 
                               1995 et 2023, similaire aux valeurs de pr&eacute;cipitations normales. 
@@ -358,7 +358,7 @@ page_navbar(
                               suivre le changement projet&eacute; des niveaux moyens de 
                               pr&eacute;cipitations et de la saisonnalit&eacute; selon le RCP 4.5.")),
                                
-                               p(strong(em("More wet rainfall (temporal evolution)"))),
+                               p(strong(em("Extreme wet rainfall"))),
                                p(HTML("Calcul&eacute;e comme le 90e centile des valeurs 
                               quotidiennes de pr&eacute;cipitations observ&eacute;es entre 
                               1995 et 2023. &Agrave; partir de 2024, les valeurs de 
