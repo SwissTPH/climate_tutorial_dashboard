@@ -84,8 +84,8 @@ tagList(
             conditionalPanel(
               condition = "input.temperature_type == 'baseline constant'", # Show only if discrete temperatures are selected
               sliderInput("discrete_temperature", HTML("S&eacute;lectionnez une temp&eacute;rature:"), 
-                          min = 20, max = 28, 
-                          value = c(20), step = 2,
+                          min = 20, max = 30, 
+                          value = c(20), step = 1,
                           sep = "")
             ),
             selectInput(

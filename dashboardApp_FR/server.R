@@ -17,9 +17,10 @@ library(zoo)
 function(input, output, session) {
   
   # Load model and  data
-  climate_data = readRDS("data/climate_data_province_v5.RDS")
+  climate_data = readRDS("data/climate_data_province_v7.RDS")
   province_params = readRDS("data/province_sites_parameters.RDS")
-  model_pred = readRDS("data/model_predictions_province_v6.RDS")
+  model_pred = readRDS("data/model_predictions_province_v8.RDS")
+  model_pred = model_pred %>% dplyr::rename(EIR = EIR_monthly)
   start_year = 2023
   
   source("rainfall_anomaly_calculation.R")

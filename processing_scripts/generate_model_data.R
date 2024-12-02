@@ -16,7 +16,7 @@ model_params = read.csv("~/gitRepos/code_climate/province_sites_parameters.csv",
 
 ## Climate data preparation
 #climate_data1 = readRDS("~/gitRepos/code_climate/province_level_past_future_climate_data.RDS")
-climate_data = readRDS("~/gitRepos/code_climate/version4d_province_level_past_future_climate_data.RDS")
+climate_data = readRDS("~/gitRepos/code_climate/version7_province_level_past_future_climate_data.RDS")
 #climate_data_no_seasonality = climate_data1 %>% select(province, date, none_seasonal_ppt)
 #climate_data_no_seasonality = climate_data_no_seasonality %>% rename(no_seasonality = none_seasonal_ppt)
 
@@ -79,13 +79,13 @@ all_climate_data = climate_data %>% rename(normal_ppt = norm_ppt,
 #     }
 #   }
 # }
-saveRDS(all_climate_data, file = "~/gitRepos/climate_tutorial_dashboard/processing_scripts/all_climate_data_province_v5.RDS")
+saveRDS(all_climate_data, file = "~/gitRepos/climate_tutorial_dashboard/processing_scripts/all_climate_data_province_v7.RDS")
 
 na_counts <- colSums(is.na(all_climate_data))
 
 # Only upload the necessary data on the dashboard
 filtered_climate_data = all_climate_data %>% filter(yr >= 2022 & yr <= 2039)
-saveRDS(filtered_climate_data, file = "~/gitRepos/climate_tutorial_dashboard/dashboardApp_FR/data/climate_data_province_v5.RDS")
+saveRDS(filtered_climate_data, file = "~/gitRepos/climate_tutorial_dashboard/dashboardApp_FR/data/climate_data_province_v7.RDS")
 
 #   
 # # The first step to simulating from the model is to specify the region 

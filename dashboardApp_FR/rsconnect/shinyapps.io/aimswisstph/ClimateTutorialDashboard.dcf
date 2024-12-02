@@ -5,7 +5,7 @@ account: aimswisstph
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 13413646
-bundleId: 9446904
+bundleId: 9449296
 url: https://aimswisstph.shinyapps.io/ClimateTutorialDashboard/
 version: 1
 asMultiple: FALSE
