@@ -387,7 +387,6 @@ function(input, output, session) {
         model_out = "inc_all"
         plot_title = "Incidence per 10000 (all ages)"
       }
-      
     } else {
       model_out = "EIR"
       plot_title = "Entomological inoculation rate"
@@ -555,21 +554,21 @@ function(input, output, session) {
     
     model_pred_scen$year = year(model_pred_scen$date_ymd)
     model_pred_scen = model_pred_scen %>% group_by(year, scenario) %>% 
-      summarise(EIR = sum(EIR),
-                inc_5 = sum(inc_5),
-                inc_all = sum(inc_all))
+      summarise(EIR_year = sum(EIR),
+                inc_5_year = sum(inc_5),
+                inc_all_year = sum(inc_all))
     
     if (input$output_type == "inc") {
-      if(input$age_groups == "under 5 years") {
-        model_out = "inc_5"
+      if(input$age_groups == "moins de 5 ans") {
+        model_out = "inc_5_year"
         plot_title = "Incidence per 10000 (<5yo)"
       } else {
-        model_out = "inc_all"
+        model_out = "inc_all_year"
         plot_title = "Incidence per 10000 (all ages)"
       }
       
     } else {
-      model_out = "EIR"
+      model_out = "EIR_year"
       plot_title = "Entomological inoculation rate"
     }
     
